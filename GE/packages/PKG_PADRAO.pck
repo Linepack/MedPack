@@ -14,7 +14,6 @@ create or replace package PKG_PADRAO IS
                        p_nm_item      in varchar2,
                        p_nr_registro  in number,
                        p_vl_item      in varchar2,
-                       p_deleta       in number,
                        p_erro         out varchar2);
 end pkg_padrao;
 /
@@ -260,84 +259,114 @@ CREATE OR REPLACE PACKAGE BODY "PKG_PADRAO" is
                        p_nm_item      in varchar2,
                        p_nr_registro  in number,
                        p_vl_item      in varchar2,
-                       p_deleta       in number,
                        p_erro         out varchar2) is
     pragma autonomous_transaction;
     va_cd_usuario    number;
     va_existe_filtro number;
+    va_bloco         number;
   begin
     pkg_valida.prc_retorna_codigo_usuario(user, va_cd_usuario, p_Erro);
     if p_erro is not null then
       return;
     end if;
   
-    if p_deleta = 1 then
-      begin
+    begin
+      select count(*)
+        into va_bloco
+        from gefiltro
+       where cd_aplicacao = p_cd_aplicacao
+         and cd_usuario = va_cd_usuario
+         and nm_bloco = p_nm_bloco
+         and nm_item = p_nm_item
+         and nr_registro <> p_nr_registro;
+    end;
+  
+    if va_bloco > 0 and p_nr_registro = 1 then
+      begin      
         delete gefiltro
-         where cd_usuario = va_Cd_usuario
-           and cd_aplicacao = p_cd_aplicacao
+         where cd_aplicacao = p_cd_aplicacao
+           and cd_usuario = va_cd_usuario
            and nm_bloco = p_nm_bloco
-           and nm_item = p_nm_item
-           and nr_registro = p_nr_registro;
+           and nm_item = p_nm_item;
       exception
         when others then
-          p_erro := 'Erro deletando GEFILTRO' || chr(10) || sqlerrm;
+          p_erro := 'Erro deletando BLOCO '||p_nm_bloco||chr(10)||sqlerrm;
+          rollback;
           return;
       end;
     end if;
   
-    begin
-      select count(*)
-        into va_existe_filtro
-        from gefiltro
-       where cd_usuario = va_Cd_usuario
-         and cd_aplicacao = p_cd_aplicacao
-         and nm_bloco = p_nm_bloco
-         and nm_item = p_nm_item
-         and nr_registro = p_nr_registro;
-    end;
-  
-    if va_existe_filtro = 0 then
+    if p_vl_item is null then
       begin
-        insert into gefiltro
-          (sq_filtro,
-           cd_usuario,
-           cd_aplicacao,
-           nm_bloco,
-           nm_item,
-           nr_registro,
-           vl_item,
-           nm_usuinc,
-           dt_usuinc)
-        values
-          (sq_gefiltro.nextval,
-           va_cd_usuario,
-           p_Cd_aplicacao,
-           p_nm_bloco,
-           p_nm_item,
-           p_nr_registro,
-           p_vl_item,
-           user,
-           sysdate);
+        delete from gefiltro
+         where cd_aplicacao = p_cd_aplicacao
+           and cd_usuario = va_cd_usuario
+           and nm_bloco = p_nm_bloco
+           and nm_item = p_nm_item;
       exception
         when others then
-          p_Erro := 'Erro inserindo GEFILTRO' || chr(10) || sqlerrm;
+          p_erro := 'Erro deletando GEFILTRO' || chr(10) || sqlerrm;
+          rollback;
           return;
       end;
+    
     else
+    
       begin
-        update gefiltro
-           set vl_item = p_vl_item
+        select count(*)
+          into va_existe_filtro
+          from gefiltro
          where cd_usuario = va_Cd_usuario
            and cd_aplicacao = p_cd_aplicacao
            and nm_bloco = p_nm_bloco
            and nm_item = p_nm_item
            and nr_registro = p_nr_registro;
-      exception
-        when others then
-          p_Erro := 'Erro update GEFILTRO' || chr(10) || sqlerrm;
-          return;
       end;
+    
+      if va_existe_filtro = 0 then
+        begin
+          insert into gefiltro
+            (sq_filtro,
+             cd_usuario,
+             cd_aplicacao,
+             nm_bloco,
+             nm_item,
+             nr_registro,
+             vl_item,
+             nm_usuinc,
+             dt_usuinc)
+          values
+            (sq_gefiltro.nextval,
+             va_cd_usuario,
+             p_Cd_aplicacao,
+             p_nm_bloco,
+             p_nm_item,
+             p_nr_registro,
+             p_vl_item,
+             user,
+             sysdate);
+        exception
+          when others then
+            p_Erro := 'Erro inserindo GEFILTRO' || chr(10) || sqlerrm;
+            rollback;
+            return;
+        end;
+      else
+        begin
+          update gefiltro
+             set vl_item = p_vl_item
+           where cd_usuario = va_Cd_usuario
+             and cd_aplicacao = p_cd_aplicacao
+             and nm_bloco = p_nm_bloco
+             and nm_item = p_nm_item
+             and nr_registro = p_nr_registro;
+        exception
+          when others then
+            p_Erro := 'Erro update GEFILTRO' || chr(10) || sqlerrm;
+            rollback;
+            return;
+        end;
+      end if;
     end if;
   
     commit;
