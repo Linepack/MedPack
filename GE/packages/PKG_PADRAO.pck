@@ -20,6 +20,9 @@ create or replace package pkg_padrao is
 											 p_nm_bloco in varchar2,
 											 p_nm_item in varchar2,
 											 p_erro out varchar2);
+	procedure prc_insere_aplicacao_perfil(p_cd_aplicacao in varchar2,
+													  p_sq_perapl in number,
+													  p_erro out varchar2);
 end pkg_padrao;
 /
 create or replace package body "PKG_PADRAO" is
@@ -291,7 +294,6 @@ create or replace package body "PKG_PADRAO" is
 			 where cd_aplicacao = p_cd_aplicacao
 				and cd_usuario = va_cd_usuario
 				and nm_bloco = p_nm_bloco
-				and nm_item = p_nm_item
 				and nr_registro <> p_nr_registro;
 		end;
 	
@@ -484,35 +486,103 @@ create or replace package body "PKG_PADRAO" is
 		commit;
 	end prc_insere_aplicacao;
 
-/*
-      procedure prc_insere_aplicacao_perfil(p_cd_aplicacao in varchar2,
-                                            p_sq_perapl in number,
-                                            p_erro out varchar2) is
-        va_geaplica 
-      begin
-      
-         begin
-            insert into geperapl
-               (sq_perapl,
-                cd_perfil,
-                cd_aplicacao,
-                st_aplicacao,
-                st_inclusao,
-                st_alteracao,
-                st_exclusao,
-                nm_usuinc,
-                dt_usuinc,
-                nm_usualt,
-                dt_usualt)
-            values
-               ();
-         exception
-           when others then
-             p_erro := 'Erro inserindo GEPERAPL'||chr(10)||sqlerrm;
-             return;      
-         end;
-      
-      end prc_insere_aplicacao_perfil;
-   */
+	procedure prc_insere_aplicacao_perfil(p_cd_aplicacao in varchar2,
+													  p_sq_perapl in number,
+													  p_erro out varchar2) is
+		va_sq_perblk number;
+		va_sq_perite number;
+	begin
+		-- BLOCOS
+		for rc_blkapl in (select *
+								  from geblkapl
+								 where cd_aplicacao = p_cd_aplicacao)
+		loop
+			begin
+				select nvl(max(sq_perblk), 0) + 1
+				  into va_sq_perblk
+				  from geperblk
+				 where sq_perapl = p_sq_perapl;
+			end;
+		
+			begin
+				insert into geperblk
+					(sq_perapl,
+					 sq_perblk,
+					 cd_aplicacao,
+					 nm_bloco,
+					 st_inclusao,
+					 st_alteracao,
+					 st_exclusao,
+					 nm_usuinc,
+					 dt_usuinc,
+					 st_salva_filtro)
+				values
+					(p_sq_perapl,
+					 va_sq_perblk,
+					 p_cd_aplicacao,
+					 rc_blkapl.nm_bloco,
+					 rc_blkapl.st_inclusao,
+					 rc_blkapl.st_alteracao,
+					 rc_blkapl.st_exclusao,
+					 user,
+					 sysdate,
+					 rc_blkapl.st_salva_filtro);
+			exception
+				when others then
+					p_erro := 'Erro inserindo GEPERBLK' || chr(10) || sqlerrm;
+					return;
+			end;
+		
+			-- ITENS
+			for rc_iteblk in (select *
+									  from geiteblk
+									 where cd_aplicacao = p_cd_aplicacao
+										and nm_bloco = rc_blkapl.nm_bloco)
+			loop
+				begin
+					select nvl(max(sq_perite), 0) + 1
+					  into va_sq_perite
+					  from geperite
+					 where sq_perapl = p_sq_perapl
+						and sq_perblk = va_sq_perblk;
+				end;
+			
+				begin
+					insert into geperite
+						(sq_perapl,
+						 sq_perblk,
+						 sq_perite,
+						 cd_aplicacao,
+						 nm_bloco,
+						 nm_item,
+						 st_inclusao,
+						 st_alteracao,
+						 st_obrigatorio,
+						 st_visivel,
+						 nm_usuinc,
+						 dt_usuinc)
+					values
+						(p_sq_perapl,
+						 va_sq_perblk,
+						 va_sq_perite,
+						 p_cd_aplicacao,
+						 rc_blkapl.nm_bloco,
+						 rc_iteblk.nm_item,
+						 rc_iteblk.st_inclusao,
+						 rc_iteblk.st_alteracao,
+						 rc_iteblk.st_obrigatorio,
+						 rc_iteblk.st_visivel,
+						 user,
+						 sysdate);
+				exception
+					when others then
+						p_erro := 'Erro inserindo GEPERITE' || chr(10) || sqlerrm;
+						return;
+				end;
+			end loop;
+		end loop;
+	
+	end prc_insere_aplicacao_perfil;
+
 end pkg_padrao;
 /
