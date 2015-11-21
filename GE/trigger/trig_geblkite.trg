@@ -2,24 +2,16 @@ create or replace trigger trig_geblkite
 	after insert or update or delete on geiteblk
 	for each row
 declare
-	va_sq_perite number;
 begin
 	if inserting then
 		for reg in (select *
 						  from geperblk)
-		loop
-			select nvl(max(sq_perite), 0) + 1
-			  into va_sq_perite
-			  from geperite
-			 where sq_perapl = reg.sq_perapl
-				and sq_perblk = reg.sq_perblk;
+		loop			
 		
 			begin
 				insert into geperite
-					(sq_perapl,
-					 sq_perblk,
-					 sq_perite,
-					 cd_aplicacao,
+					(cd_perfil,
+           cd_aplicacao,
 					 nm_bloco,
 					 nm_item,
 					 st_inclusao,
@@ -29,10 +21,8 @@ begin
 					 nm_usuinc,
 					 dt_usuinc)
 				values
-					(reg.sq_perapl,
-					 reg.sq_perblk,
-					 va_sq_perite,
-					 :new.cd_aplicacao,
+					(reg.cd_perfil,
+           :new.cd_aplicacao,
 					 :new.nm_bloco,
 					 :new.nm_item,
 					 :new.st_inclusao,

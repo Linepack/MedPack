@@ -9,8 +9,7 @@ begin
 		loop
 			begin
 				insert into geperapl
-					(sq_perapl,
-					 cd_perfil,
+					(cd_perfil,
 					 cd_aplicacao,
 					 st_aplicacao,
 					 st_inclusao,
@@ -19,8 +18,7 @@ begin
 					 nm_usuinc,
 					 dt_usuinc)
 				values
-					(sq_geperapl.nextval,
-					 reg.cd_perfil,
+					(reg.cd_perfil,
 					 :new.cd_aplicacao,
 					 'I',
 					 :new.st_inclusao,
