@@ -21,7 +21,7 @@ create or replace package pkg_padrao is
 											 p_nm_item in varchar2,
 											 p_erro out varchar2);
 	procedure prc_insere_aplicacao_perfil(p_cd_aplicacao in varchar2,
-													  p_sq_perapl in number,
+													  p_cd_perfil in number,
 													  p_erro out varchar2);
 end pkg_padrao;
 /
@@ -487,27 +487,18 @@ create or replace package body "PKG_PADRAO" is
 	end prc_insere_aplicacao;
 
 	procedure prc_insere_aplicacao_perfil(p_cd_aplicacao in varchar2,
-													  p_sq_perapl in number,
+													  p_cd_perfil in number,
 													  p_erro out varchar2) is
-		va_sq_perblk number;
-		va_sq_perite number;
 	begin
 		-- BLOCOS
 		for rc_blkapl in (select *
 								  from geblkapl
 								 where cd_aplicacao = p_cd_aplicacao)
 		loop
-			begin
-				select nvl(max(sq_perblk), 0) + 1
-				  into va_sq_perblk
-				  from geperblk
-				 where sq_perapl = p_sq_perapl;
-			end;
 		
 			begin
 				insert into geperblk
-					(sq_perapl,
-					 sq_perblk,
+					(cd_perfil,
 					 cd_aplicacao,
 					 nm_bloco,
 					 st_inclusao,
@@ -517,9 +508,8 @@ create or replace package body "PKG_PADRAO" is
 					 dt_usuinc,
 					 st_salva_filtro)
 				values
-					(p_sq_perapl,
-					 va_sq_perblk,
-					 p_cd_aplicacao,
+					(p_cd_perfil,
+           p_cd_aplicacao,
 					 rc_blkapl.nm_bloco,
 					 rc_blkapl.st_inclusao,
 					 rc_blkapl.st_alteracao,
@@ -539,19 +529,10 @@ create or replace package body "PKG_PADRAO" is
 									 where cd_aplicacao = p_cd_aplicacao
 										and nm_bloco = rc_blkapl.nm_bloco)
 			loop
-				begin
-					select nvl(max(sq_perite), 0) + 1
-					  into va_sq_perite
-					  from geperite
-					 where sq_perapl = p_sq_perapl
-						and sq_perblk = va_sq_perblk;
-				end;
 			
 				begin
 					insert into geperite
-						(sq_perapl,
-						 sq_perblk,
-						 sq_perite,
+						(cd_perfil,
 						 cd_aplicacao,
 						 nm_bloco,
 						 nm_item,
@@ -562,9 +543,7 @@ create or replace package body "PKG_PADRAO" is
 						 nm_usuinc,
 						 dt_usuinc)
 					values
-						(p_sq_perapl,
-						 va_sq_perblk,
-						 va_sq_perite,
+						(p_cd_perfil,
 						 p_cd_aplicacao,
 						 rc_blkapl.nm_bloco,
 						 rc_iteblk.nm_item,

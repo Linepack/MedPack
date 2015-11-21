@@ -5,7 +5,9 @@ declare
 begin
 	if inserting then
 		for reg in (select *
-						  from geperblk)
+						  from geperblk
+             where cd_aplicacao = :new.cd_aplicacao
+               and nm_bloco = :new.nm_bloco)
 		loop			
 		
 			begin

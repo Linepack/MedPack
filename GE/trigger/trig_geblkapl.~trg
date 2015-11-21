@@ -2,22 +2,17 @@ create or replace trigger trig_geblkapl
 	after insert or update or delete on geblkapl
 	for each row
 declare
-	va_sq_perblk number;
 begin
 	if inserting then
 		for reg in (select *
-						  from geperapl)
+                  from geperapl
+                 where cd_aplicacao = :new.cd_aplicacao)
 		loop
-			select nvl(max(sq_perblk), 0) + 1
-			  into va_sq_perblk
-			  from geperblk
-			 where sq_perapl = reg.sq_perapl;
 		
 			begin
 				insert into geperblk
-					(sq_perapl,
-					 sq_perblk,
-					 cd_aplicacao,
+					(cd_perfil,
+           cd_aplicacao,
 					 nm_bloco,
 					 st_inclusao,
 					 st_alteracao,
@@ -26,9 +21,8 @@ begin
 					 dt_usuinc,
 					 st_salva_filtro)
 				values
-					(reg.sq_perapl,
-					 va_sq_perblk,
-					 :new.cd_aplicacao,
+					(reg.cd_perfil,
+           :new.cd_aplicacao,
 					 :new.nm_bloco,
 					 :new.st_inclusao,
 					 :new.st_alteracao,
