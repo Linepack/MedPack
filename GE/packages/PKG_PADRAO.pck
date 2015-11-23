@@ -19,6 +19,11 @@ create or replace package pkg_padrao is
 											 p_cd_aplicacao in varchar2,
 											 p_nm_bloco in varchar2,
 											 p_nm_item in varchar2,
+											 p_st_inclusao in varchar2,
+											 p_st_alteracao in varchar2,
+											 p_st_exclusao in varchar2,
+											 p_st_obrigatorio in varchar2,
+											 p_st_visivel in varchar2,
 											 p_erro out varchar2);
 	procedure prc_insere_aplicacao_perfil(p_cd_aplicacao in varchar2,
 													  p_cd_perfil in number,
@@ -393,6 +398,11 @@ create or replace package body "PKG_PADRAO" is
 											 p_cd_aplicacao in varchar2,
 											 p_nm_bloco in varchar2,
 											 p_nm_item in varchar2,
+											 p_st_inclusao in varchar2,
+											 p_st_alteracao in varchar2,
+											 p_st_exclusao in varchar2,
+											 p_st_obrigatorio in varchar2,
+											 p_st_visivel in varchar2,
 											 p_erro out varchar2) is
 		pragma autonomous_transaction;
 		va_existe number;
@@ -438,9 +448,9 @@ create or replace package body "PKG_PADRAO" is
 					(p_cd_aplicacao,
 					 p_nm_bloco,
 					 p_nm_bloco,
-					 'S',
-					 'S',
-					 'S',
+					 p_st_inclusao,
+					 p_st_alteracao,
+					 p_st_exclusao,
 					 'N',
 					 user,
 					 sysdate);
@@ -469,10 +479,10 @@ create or replace package body "PKG_PADRAO" is
 					 p_nm_bloco,
 					 p_nm_item,
 					 p_nm_item,
-					 'S',
-					 'S',
-					 'N',
-					 'S',
+					 p_st_inclusao,
+					 p_st_alteracao,
+					 p_st_obrigatorio,
+					 p_st_visivel,
 					 user,
 					 sysdate);
 			exception
@@ -509,7 +519,7 @@ create or replace package body "PKG_PADRAO" is
 					 st_salva_filtro)
 				values
 					(p_cd_perfil,
-           p_cd_aplicacao,
+					 p_cd_aplicacao,
 					 rc_blkapl.nm_bloco,
 					 rc_blkapl.st_inclusao,
 					 rc_blkapl.st_alteracao,
